@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helix · European Banking Churn & Depositor Analytics</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Postprocessing -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #060912;
+            color: #FFFFFF;
+            overflow-x: hidden;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #060912;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 167, 38, 0.25);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 167, 38, 0.5);
+        }
+        /* Helix Glassmorphic Design */
+        .helix-card {
+            background: rgba(13, 19, 31, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+        }
+        .helix-card:hover {
+            border-color: rgba(255, 167, 38, 0.35);
+        }
+        .glow-amber {
+            box-shadow: 0 0 30px -5px rgba(255, 167, 38, 0.3);
+        }
+        /* Traveling scroll line */
+        @keyframes scrollLine {
+            0% { transform: translateY(-100%); opacity: 0; }
+            40% { opacity: 1; }
+            80% { transform: translateY(100%); opacity: 0; }
+            100% { transform: translateY(100%); opacity: 0; }
+        }
+        .animate-scroll-line {
+            animation: scrollLine 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+        }
+        .modal-blur {
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none !important;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+            40% { transform: translateY(-5px); opacity: 1; }
+        }
+        .animate-typing-1 { animation: typingBounce 1.2s infinite 0.0s; }
+        .animate-typing-2 { animation: typingBounce 1.2s infinite 0.2s; }
+        .animate-typing-3 { animation: typingBounce 1.2s infinite 0.4s; }
+    </style>
+</head>
+<body class="bg-[#060912] text-white">
+
+    <!-- 3D WebGL Canvas (Fixed Fullscreen Background) -->
+    <div id="webgl-container" class="fixed inset-0 z-0 pointer-events-none w-full h-full overflow-hidden">
+        <canvas id="helix-canvas" class="w-full h-full block"></canvas>
+    </div>
+
+    <!-- Vignette & Atmospheric Depth Layer -->
+    <div class="fixed inset-0 z-[1] pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(6,9,18,0.45)_60%,rgba(6,9,18,0.96)_100%)]"></div>
+
+    <!-- Fixed Top Header Navigation (Exact Helix Style) -->
+    <header class="fixed top-0 left-0 right-0 z-50 px-6 sm:px-12 py-5 flex items-center justify-between pointer-events-auto backdrop-blur-md bg-[#060912]/60 border-b border-white/[0.06]">
+        <!-- Logo -->
+        <a href="#" class="flex items-center space-x-2.5 group">
+            <svg class="w-6 h-6 text-white group-hover:text-[#FFA726] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 15c6.667-6 13.333 0 20-6"/>
+                <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993"/>
+                <path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993"/>
+                <path d="M17 6l-2.5-2.5"/>
+                <path d="M14 8l-1-1"/>
+                <path d="M7 18l2.5 2.5"/>
+                <path d="M6 19l4-4"/>
+                <path d="M14 9l4-4"/>
+            </svg>
+            <span class="text-[17px] font-bold tracking-tight text-white">Helix</span>
+            <span class="text-[10px] text-[#FFA726] font-mono tracking-wider ml-1 bg-[#FFA726]/10 px-2 py-0.5 rounded border border-[#FFA726]/20">BANKING</span>
+        </a>
+
+        <!-- Center Nav Links -->
+        <nav class="hidden lg:flex items-center space-x-8 text-[13px] text-[#94A3B8] font-medium">
+            <button onclick="scrollToSection('hero')" class="hover:text-white transition flex items-center gap-1">Hero Overview <span class="text-[10px] opacity-70">▾</span></button>
+            <button onclick="scrollToSection('documentation')" class="hover:text-white transition">Documentation</button>
+            <button onclick="scrollToSection('streamlit')" class="hover:text-white transition">Streamlit Engine</button>
+            <button onclick="scrollToSection('methodology')" class="hover:text-white transition">Methodology</button>
+            <button onclick="scrollToSection('helix-theme')" class="hover:text-white transition">About Helix</button>
+            <button onclick="openPaperModal()" class="hover:text-white transition">Research Paper</button>
+            <button onclick="openSupervisoryModal()" class="hover:text-white transition">Supervisory</button>
+        </nav>
+
+        <!-- Right Action CTAs -->
+        <div class="flex items-center space-x-3 sm:space-x-5">
+            <a href="http://localhost:8501" target="_blank" class="bg-[#FFA726] hover:bg-[#FFB74D] text-[#060912] font-semibold text-[13px] px-5 py-2.5 rounded-full transition-all duration-200 shadow-[0_0_20px_rgba(255,167,38,0.25)] hover:shadow-[0_0_25px_rgba(255,167,38,0.45)] flex items-center gap-1.5">
+                <span>Launch App</span> <span>↗</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- 4-STAGE 3D SCROLL EXPERIENCE (400vh) -->
+    <div id="scroll-track" class="relative w-full h-[400vh]">
+
+        <!-- STAGE 1: HERO STATE (0% - 25% Scroll) -->
+        <section id="stage-1" class="fixed inset-0 z-10 pointer-events-none flex flex-col justify-center px-8 sm:px-16 md:px-24 max-w-7xl mx-auto transition-opacity duration-700 ease-out">
+            <div class="max-w-[560px] pointer-events-auto space-y-6 pt-10">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-[#94A3B8]">
+                    <span class="w-2 h-2 rounded-full bg-[#FFA726] animate-pulse"></span>
+                    <span>Customer Segmentation & Churn Analytics in European Banking</span>
+                </div>
+                <h1 class="text-4xl sm:text-5xl md:text-[54px] font-semibold tracking-[-0.03em] text-white leading-[1.08]">
+                    Find out what customer churn says about your bank.
+                </h1>
+                <p class="text-base sm:text-[17px] text-[#94A3B8] font-normal leading-relaxed max-w-[480px]">
+                    Uncover depositor attrition patterns across 10,000 European accounts and protect core liquidity with precision segmentation analytics.
+                </p>
+                <div class="pt-2">
+                    <button onclick="openDashboardModal()" class="group inline-flex items-center text-[#FFA726] font-medium text-[15px] hover:text-[#FFB74D] transition-all">
+                        <span class="mr-2 text-lg transition-transform group-hover:translate-x-1.5 duration-200">›</span>
+                        Explore analytics
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none space-y-2 opacity-70">
+                <span class="text-[10px] uppercase font-mono tracking-[0.25em] text-[#94A3B8]">SCROLL</span>
+                <div class="w-[1.5px] h-8 bg-white/10 relative overflow-hidden rounded-full">
+                    <div class="w-full h-3 bg-[#FFA726] rounded-full animate-scroll-line"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STAGE 2: NARRATIVE SHIFT (25% - 55% Scroll) -->
+        <section id="stage-2" class="fixed inset-0 z-10 pointer-events-none flex items-center justify-end px-8 sm:px-16 md:px-24 max-w-7xl mx-auto opacity-0 transition-opacity duration-700 ease-out">
+            <div class="max-w-[480px] pointer-events-auto space-y-6 text-left">
+                <div class="inline-flex items-center gap-2 text-xs font-mono text-[#FFA726] tracking-wider uppercase">
+                    <span>◈</span> Section 02 / Diagnostics
+                </div>
+                <h2 class="text-3xl sm:text-4xl md:text-[44px] font-semibold tracking-[-0.03em] text-white leading-[1.12]">
+                    How will churn analytics protect your balance sheet?
+                </h2>
+                <p class="text-base text-[#94A3B8] font-normal leading-relaxed">
+                    Granular segmentation offers a powerful diagnostic to understand depositor lifecycles, demographic vulnerability, and where capital is at risk across European jurisdictions.
+                </p>
+                <div class="pt-1">
+                    <button onclick="openDashboardModal()" class="inline-flex items-center text-[#FFA726] font-medium text-[15px] hover:text-[#FFB74D] transition-all group">
+                        <span class="mr-2 text-lg transition-transform group-hover:translate-x-1.5 duration-200">›</span>
+                        Inspect risk distribution
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- STAGE 3: MACRO 4-CARD MATRIX (55% - 80% Scroll) -->
+        <section id="stage-3" class="fixed inset-0 z-10 pointer-events-none flex items-center justify-center px-6 sm:px-12 md:px-20 max-w-7xl mx-auto opacity-0 transition-opacity duration-700 ease-out">
+            <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-y-6 md:gap-y-16 gap-x-28 lg:gap-x-44 pointer-events-auto">
+
+                <!-- Top Left: Geography -->
+                <div class="helix-card rounded-2xl p-6 transition-transform duration-300 hover:scale-[1.02]">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-[#FFA726]">GEOGRAPHY</div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span class="text-3xl font-bold text-white tracking-tight">32.44%</span>
+                        <span class="text-xs text-[#94A3B8]">Germany Churn</span>
+                    </div>
+                    <p class="text-xs text-[#94A3B8] mt-3 leading-relaxed">
+                        Germany records a 1.59× risk multiplier, contributing 39.96% of all churned clients despite holding only 25% of customers.
+                    </p>
+                </div>
+
+                <!-- Top Right: Demographics -->
+                <div class="helix-card rounded-2xl p-6 transition-transform duration-300 hover:scale-[1.02]">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-[#FFA726]">DEMOGRAPHICS</div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span class="text-3xl font-bold text-white tracking-tight">51.12%</span>
+                        <span class="text-xs text-[#94A3B8]">Age 46–60 Hotspot</span>
+                    </div>
+                    <p class="text-xs text-[#94A3B8] mt-3 leading-relaxed">
+                        Pre-retirees present the highest demographic churn across all nations, peaking at an alarming 67.33% in Germany.
+                    </p>
+                </div>
+
+                <!-- Bottom Left: Engagement -->
+                <div class="helix-card rounded-2xl p-6 transition-transform duration-300 hover:scale-[1.02]">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-[#FFA726]">ENGAGEMENT</div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span class="text-3xl font-bold text-white tracking-tight">26.85%</span>
+                        <span class="text-xs text-[#94A3B8]">Inactive Accounts</span>
+                    </div>
+                    <p class="text-xs text-[#94A3B8] mt-3 leading-relaxed">
+                        Digitally dormant members experience nearly double the churn of active users (14.27%), highlighting digital engagement as a vital shield.
+                    </p>
+                </div>
+
+                <!-- Bottom Right: Capital Exposure -->
+                <div class="helix-card rounded-2xl p-6 transition-transform duration-300 hover:scale-[1.02]">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-[#FFA726]">CAPITAL AT RISK</div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span class="text-3xl font-bold text-white tracking-tight">€110.8M</span>
+                        <span class="text-xs text-[#94A3B8]">High-Balance Drain</span>
+                    </div>
+                    <p class="text-xs text-[#94A3B8] mt-3 leading-relaxed">
+                        High-balance depositors (≥€119.8k) represent €110.85M in departed capital, directly impacting bank liquidity coverage ratios.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- STAGE 4: PULLBACK & CONVERSION FINALE (80% - 100% Scroll) -->
+        <section id="stage-4" class="fixed inset-0 z-10 pointer-events-none flex flex-col justify-between pt-24 pb-8 px-6 sm:px-12 max-w-6xl mx-auto opacity-0 transition-opacity duration-700 ease-out">
+            <div class="my-auto text-center pointer-events-auto space-y-6 max-w-2xl mx-auto">
+                <h2 class="text-3xl sm:text-4xl md:text-[42px] font-semibold text-white tracking-[-0.03em] leading-tight">
+                    Helix helps you understand what depositor churn means — not just what it says
+                </h2>
+
+                <!-- Email Input Capsule (Exact Helix Style) -->
+                <div class="flex items-center bg-[#0D131F]/80 border border-white/15 rounded-full p-1.5 max-w-[480px] mx-auto backdrop-blur-md shadow-2xl transition focus-within:border-[#FFA726]">
+                    <input type="email" id="emailInput" placeholder="Enter your corporate email" class="text-sm text-white/90 placeholder-white/40 bg-transparent px-4 py-2 outline-none flex-1">
+                    <button onclick="requestAccess()" class="bg-[#FFA726] hover:bg-[#FFB74D] text-[#060912] text-sm font-semibold rounded-full px-5 py-2.5 transition-all duration-200 shadow-md shrink-0">
+                        Request access →
+                    </button>
+                </div>
+
+                <div class="pt-2 flex items-center justify-center gap-4 text-xs">
+                    <button onclick="scrollToSection('documentation')" class="text-slate-300 hover:text-white underline underline-offset-4 transition">
+                        📜 View Full Technical Documentation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scroll-down arrow to content -->
+            <div class="text-center pointer-events-auto pb-4">
+                <button onclick="scrollToSection('documentation')" class="text-xs text-[#94A3B8] hover:text-white transition flex flex-col items-center mx-auto gap-1">
+                    <span>Explore Comprehensive Data & Documentation</span>
+                    <span class="text-base animate-bounce">↓</span>
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ================= FULL EXTENSIVE CONTENT SECTION ================= -->
+    <div id="full-content-container" class="relative z-20 bg-[#060912] border-t border-white/10 px-6 sm:px-12 md:px-20 py-20 space-y-24 max-w-7xl mx-auto">
+
+        <!-- 1. ABOUT HELIX THEME & ARCHITECTURE -->
+        <section id="helix-theme" class="space-y-8">
+            <div class="border-b border-white/10 pb-4">
+                <div class="text-xs font-mono uppercase tracking-widest text-[#FFA726] mb-1">Theme Architecture</div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white">About the Helix Cinematic System</h2>
+                <p class="text-sm text-[#94A3B8] mt-1">
+                    "A double helix turns slowly through the dark, equal parts biology and blueprint — a hero for brands built on precision."
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-[#94A3B8] leading-relaxed">
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <span class="text-[#FFA726]">🧬</span> Biology Meets Blueprint
+                    </h3>
+                    <p>
+                        Designed for high-precision analytical platforms, Helix visualizes data structures as a continuous mechanical helix. Cylindrical titanium rungs hold luminous amber energy filaments, symbolizing underlying behavioral DNA.
+                    </p>
+                </div>
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <span class="text-[#FFA726]">🎥</span> 4-Stage Cinematic Spline
+                    </h3>
+                    <p>
+                        The camera path transitions from wide establishing framing, to an offset dolly tracking move, into an extreme macro bloom close-up, and finishes with a wide pullback framing conversion elements.
+                    </p>
+                </div>
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <span class="text-[#FFA726]">⚙️</span> Stack & Performance
+                    </h3>
+                    <p>
+                        Built with Three.js WebGL, Unreal Bloom post-processing, Tailwind CSS, and Lerp-damped scroll kinematics for buttery 60 FPS performance across desktop and mobile devices.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. STREAMLIT WEB APPLICATION (PORTAL SHOWCASE) -->
+        <section id="streamlit" class="space-y-8">
+            <div class="border-b border-white/10 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div class="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-1 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Dedicated Analytics Platform
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white">Streamlit Web Application Engine</h2>
+                    <p class="text-sm text-[#94A3B8] mt-1">
+                        Opens in a full-screen, unconstrained high-performance environment on port 8501.
+                    </p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Server Status: Active
+                    </span>
+                </div>
+            </div>
+
+            <!-- Premium App Showcase Card (No Clumsy Frame) -->
+            <div class="helix-card rounded-2xl p-8 sm:p-10 border border-emerald-500/25 shadow-2xl relative overflow-hidden bg-gradient-to-b from-[#0E1626]/90 via-[#0A0F1D]/80 to-[#060912]">
+                <div class="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="max-w-3xl space-y-6 relative z-10">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-semibold text-emerald-300">
+                        <span>⚡ Python 3 + Streamlit + Plotly Engine</span>
+                    </div>
+
+                    <h3 class="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-snug">
+                        Experience the Full Interactive Analytical Suite in a Clean, Dedicated Workspace
+                    </h3>
+
+                    <p class="text-sm text-[#94A3B8] leading-relaxed">
+                        Rather than constraining the analytical dashboard inside an embedded viewport, the application runs on a dedicated high-performance Uvicorn server (<code class="text-emerald-400 bg-black/40 px-1.5 py-0.5 rounded font-mono text-xs">port 8501</code>). This delivers full screen responsiveness for granular customer triage, multi-dimensional filtering, interactive scatter matrices, and instant CSV downloads.
+                    </p>
+
+                    <!-- Preview Action & Top Nav Reference -->
+                    <div class="pt-3 flex flex-wrap items-center gap-4">
+                        <button onclick="openDashboardModal()" class="inline-flex items-center gap-2 bg-[#FFA726]/15 hover:bg-[#FFA726]/25 text-[#FFA726] border border-[#FFA726]/30 font-semibold text-sm px-6 py-3.5 rounded-full transition shadow-lg">
+                            <span>📊 Open In-Page Analytics Preview</span>
+                        </button>
+                        <span class="text-xs text-[#94A3B8] flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-3 rounded-full">
+                            <span>💡</span> Click <strong class="text-white">Launch App ↗</strong> in the top header to open the live standalone environment.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Feature Grid inside Showcase -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-8 border-t border-white/10 text-xs relative z-10">
+                    <div class="bg-black/30 p-4 rounded-xl border border-white/5 space-y-1.5">
+                        <div class="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                            <span>🎯</span> Dynamic Filters
+                        </div>
+                        <p class="text-slate-400 leading-relaxed">Filter by Geography, Gender, Membership, Age groups, and Balance tiers simultaneously.</p>
+                    </div>
+
+                    <div class="bg-black/30 p-4 rounded-xl border border-white/5 space-y-1.5">
+                        <div class="text-[#FFA726] font-bold text-xs flex items-center gap-1.5">
+                            <span>📈</span> Plotly Visuals
+                        </div>
+                        <p class="text-slate-400 leading-relaxed">Interactive cross-tab heatmaps, depositor scatter ledgers, and dynamic retention donuts.</p>
+                    </div>
+
+                    <div class="bg-black/30 p-4 rounded-xl border border-white/5 space-y-1.5">
+                        <div class="text-blue-400 font-bold text-xs flex items-center gap-1.5">
+                            <span>🔍</span> Customer Triage
+                        </div>
+                        <p class="text-slate-400 leading-relaxed">Inspect 10,000 individual customer profiles with one-click high-risk prioritization filters.</p>
+                    </div>
+
+                    <div class="bg-black/30 p-4 rounded-xl border border-white/5 space-y-1.5">
+                        <div class="text-purple-400 font-bold text-xs flex items-center gap-1.5">
+                            <span>📥</span> 1-Click CSV Export
+                        </div>
+                        <p class="text-slate-400 leading-relaxed">Export refined customer cohorts directly into spreadsheets for frontline branch outreach.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Streamlit Specifications Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-[#94A3B8]">
+                <div class="helix-card rounded-2xl p-6 space-y-2">
+                    <h4 class="font-bold text-white text-sm text-[#FFA726]">Core Streamlit Modules</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><strong>Overall Churn Summary:</strong> Live KPI metrics, retention donut, and baseline risk.</li>
+                        <li><strong>Geography-Wise Visualization:</strong> Churn rates and contributions across France, Germany, and Spain.</li>
+                        <li><strong>Age & Tenure Comparison:</strong> Life-stage analysis highlighting the 46–60 vulnerability.</li>
+                        <li><strong>High-Value Customer Churn Explorer:</strong> Depositor ledger scatter plot and €110.8M capital risk.</li>
+                    </ul>
+                </div>
+                <div class="helix-card rounded-2xl p-6 space-y-2">
+                    <h4 class="font-bold text-white text-sm text-[#FFA726]">User Capabilities</h4>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><strong>Multi-Dimensional Filters:</strong> Filter by Country, Gender, Activity, Age, Credit Score, Balance Tier, and Products.</li>
+                        <li><strong>Dynamic KPI Updates:</strong> Immediate recalculation of churn rates and capital exposure.</li>
+                        <li><strong>Drill-Down Views:</strong> Customer account triage table with search and CSV export.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. FULL TECHNICAL DOCUMENTATION & DATASET ARCHITECTURE -->
+        <section id="documentation" class="space-y-8">
+            <div class="border-b border-white/10 pb-4">
+                <div class="text-xs font-mono uppercase tracking-widest text-[#FFA726] mb-1">Technical Specification</div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white">Technical Documentation & Background</h2>
+                <p class="text-sm text-[#94A3B8] mt-1">
+                    Comprehensive project requirements, problem statement, and dataset architecture.
+                </p>
+            </div>
+
+            <!-- Background and Problem Statement -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-[#94A3B8] leading-relaxed">
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider text-[#FFA726]">Background and Context</h3>
+                    <p>
+                        Customer churn represents one of the largest hidden costs in retail banking. Losing existing customers leads to:
+                    </p>
+                    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+                        <li><strong>Reduced lifetime value</strong></li>
+                        <li><strong>Increased acquisition costs</strong> (5× to 7× higher than retention)</li>
+                        <li><strong>Revenue & liquidity instability</strong></li>
+                    </ul>
+                    <p class="pt-2">
+                        While banks track churn rates, they lack granular segmentation insights needed to answer:
+                    </p>
+                    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+                        <li>Which customer groups are most likely to churn?</li>
+                        <li>How churn differs across countries, age groups, and financial profiles?</li>
+                        <li>Whether churn is concentrated among high-value or low-value customers?</li>
+                    </ul>
+                    <div class="pt-2 flex items-center gap-3">
+                        <a href="https://www.unifiedmentor.com/" target="_blank" class="text-[#FFA726] hover:underline">Unified Mentor ↗</a>
+                        <span class="text-slate-600">·</span>
+                        <a href="https://www.ecb.europa.eu/home/html/index.en.html" target="_blank" class="text-[#FFA726] hover:underline">The European Central Bank ↗</a>
+                    </div>
+                </div>
+
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider text-red-400">Problem Statement</h3>
+                    <p>
+                        Despite having rich customer-level data, banks face challenges in:
+                    </p>
+                    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+                        <li><strong>Identifying high-risk customer segments</strong></li>
+                        <li><strong>Understanding churn differences by geography and demographics</strong></li>
+                        <li><strong>Quantifying the financial profile of churned customers</strong></li>
+                    </ul>
+                    <div class="bg-red-500/10 border border-red-500/30 p-3.5 rounded-xl text-red-300 mt-4">
+                        ⚠️ <strong>Core Vulnerability:</strong> Without structured segmentation analytics, churn management strategies remain generic, reactive, and inefficient.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Objectives -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-[#94A3B8]">
+                <div class="helix-card rounded-2xl p-6 space-y-2">
+                    <h4 class="font-bold text-white text-sm">Primary Project Objectives</h4>
+                    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+                        <li>Measure overall customer churn rate across Europe.</li>
+                        <li>Identify churn distribution across customer segments.</li>
+                        <li>Compare churn behavior across France, Germany, and Spain.</li>
+                    </ul>
+                </div>
+                <div class="helix-card rounded-2xl p-6 space-y-2">
+                    <h4 class="font-bold text-white text-sm">Secondary Project Objectives</h4>
+                    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+                        <li>Understand churn among high-value and high-balance customers.</li>
+                        <li>Evaluate engagement and tenure patterns.</li>
+                        <li>Support strategic planning and targeted marketing decisions.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Complete Dataset Description Table -->
+            <div class="helix-card rounded-2xl p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider text-[#FFA726]">Audited Dataset Description (10,000 Records)</h3>
+                        <p class="text-xs text-slate-400">Standardized European retail banking dataset schema</p>
+                    </div>
+                    <a href="https://drive.google.com/file/d/1TpMEWG4De0sD_P7_VJ7HtjT_89jlJHpQ/view?usp=drive_link" target="_blank" class="text-xs text-[#FFA726] border border-[#FFA726]/30 px-3 py-1.5 rounded-full hover:bg-[#FFA726]/10 transition">
+                        Access Source Dataset ↗
+                    </a>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-900/90 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">Field Name</th>
+                                <th class="p-3">Data Type</th>
+                                <th class="p-3">Analytical Role</th>
+                                <th class="p-3">Operational Description</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60 text-slate-300 code-font">
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">CustomerId</td>
+                                <td class="p-3">Integer</td>
+                                <td class="p-3">Identifier</td>
+                                <td class="p-3">Unique customer identifier</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">Surname</td>
+                                <td class="p-3">String</td>
+                                <td class="p-3">Non-Analytical</td>
+                                <td class="p-3">Customer surname (sanitized for privacy)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">CreditScore</td>
+                                <td class="p-3">Integer</td>
+                                <td class="p-3">Financial Risk</td>
+                                <td class="p-3">Customer creditworthiness rating (350–850)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">Geography</td>
+                                <td class="p-3">Categorical</td>
+                                <td class="p-3">Macro Jurisdiction</td>
+                                <td class="p-3">Account domicile: France, Germany, Spain</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">Gender</td>
+                                <td class="p-3">Binary</td>
+                                <td class="p-3">Demographic</td>
+                                <td class="p-3">Biological sex: Female (4,543), Male (5,457)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">Age</td>
+                                <td class="p-3">Integer</td>
+                                <td class="p-3">Demographic</td>
+                                <td class="p-3">Customer age in years (18–92)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">Tenure</td>
+                                <td class="p-3">Integer</td>
+                                <td class="p-3">Relationship</td>
+                                <td class="p-3">Years with the bank (0 to 10)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">Balance</td>
+                                <td class="p-3">Continuous</td>
+                                <td class="p-3">Capital Asset</td>
+                                <td class="p-3">Account balance in Euros (€0.00 to €250,898.09)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">NumOfProducts</td>
+                                <td class="p-3">Integer</td>
+                                <td class="p-3">Product Depth</td>
+                                <td class="p-3">Number of bank products (1, 2, 3, or 4)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">HasCrCard</td>
+                                <td class="p-3">Binary</td>
+                                <td class="p-3">Channel</td>
+                                <td class="p-3">Credit card ownership flag (1 = Yes, 0 = No)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">IsActiveMember</td>
+                                <td class="p-3">Binary</td>
+                                <td class="p-3">Behavioral</td>
+                                <td class="p-3">Digital engagement activity indicator (1 = Active, 0 = Inactive)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-[#FFA726] font-bold">EstimatedSalary</td>
+                                <td class="p-3">Continuous</td>
+                                <td class="p-3">Financial Profile</td>
+                                <td class="p-3">Estimated annual income in Euros</td>
+                            </tr>
+                            <tr class="bg-red-500/10">
+                                <td class="p-3 text-red-400 font-bold">Exited</td>
+                                <td class="p-3">Binary</td>
+                                <td class="p-3 font-semibold text-white">Target Variable</td>
+                                <td class="p-3 text-white">Churn indicator: 0 = Retained (7,963), 1 = Churned (2,037)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. STEP-BY-STEP ANALYTICAL METHODOLOGY -->
+        <section id="methodology" class="space-y-8">
+            <div class="border-b border-white/10 pb-4">
+                <div class="text-xs font-mono uppercase tracking-widest text-[#FFA726] mb-1">Process Pipeline</div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white">Analytical Methodology (Step-by-Step)</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-[#94A3B8] leading-relaxed">
+                <!-- Step 1 -->
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <div class="text-[#FFA726] font-mono font-bold text-sm">01 / Ingestion & Cleaning</div>
+                    <ul class="list-disc pl-5 space-y-1.5 text-slate-300">
+                        <li>Load 10,000 raw customer records.</li>
+                        <li>Validate engagement, product fields, and binary consistency.</li>
+                        <li>Confirm churn labeling accuracy (Exited = 0 / 1).</li>
+                        <li>Remove non-analytical fields (Surname).</li>
+                    </ul>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <div class="text-[#FFA726] font-mono font-bold text-sm">02 / Segmentation Tiers</div>
+                    <ul class="list-disc pl-5 space-y-1.5 text-slate-300">
+                        <li><strong>Geography:</strong> France, Spain, Germany</li>
+                        <li><strong>Age Cohorts:</strong> &lt;30, 30–45, 46–60, 60+</li>
+                        <li><strong>Credit Score Bands:</strong> Low, Medium, High</li>
+                        <li><strong>Tenure Groups:</strong> New, Mid-term, Long-term</li>
+                        <li><strong>Balance Segments:</strong> Zero, Low, High-balance (≥€119.8k)</li>
+                    </ul>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <div class="text-[#FFA726] font-mono font-bold text-sm">03 / Risk Quantification</div>
+                    <ul class="list-disc pl-5 space-y-1.5 text-slate-300">
+                        <li>Calculate segment-wise churn rates.</li>
+                        <li>Quantify churn contribution vs segment size.</li>
+                        <li>Isolate high-balance churners (€110.85M balance exposure).</li>
+                        <li>Compute Geographic Risk Index (GRI = 1.59× for Germany).</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. OFFICIAL DELIVERABLES & SUBMISSION CONCLUSION -->
+        <section id="deliverables" class="space-y-8">
+            <div class="border-b border-white/10 pb-4">
+                <div class="text-xs font-mono uppercase tracking-widest text-[#FFA726] mb-1">Final Submission</div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white">Project Deliverables & Submission Package</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <div class="text-sm font-bold text-white flex items-center gap-2">
+                        <span>📄</span> Research Paper
+                    </div>
+                    <p class="text-slate-400">
+                        Full 12-section research paper with EDA, econometric insights, references, and strategic retention playbooks.
+                    </p>
+                    <button onclick="openPaperModal()" class="text-[#FFA726] hover:underline font-semibold block pt-2">Read Complete Paper →</button>
+                </div>
+
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <div class="text-sm font-bold text-white flex items-center gap-2">
+                        <span>📊</span> Streamlit Dashboard
+                    </div>
+                    <p class="text-slate-400">
+                        Live analytics application with segment filters, dynamic KPI recalculations, scatter plots, and drill-down exports.
+                    </p>
+                    <button onclick="scrollToSection('streamlit')" class="text-emerald-400 hover:underline font-semibold block pt-2">View Live Engine →</button>
+                </div>
+
+                <div class="helix-card rounded-2xl p-6 space-y-3">
+                    <div class="text-sm font-bold text-white flex items-center gap-2">
+                        <span>🏛️</span> Executive Summary
+                    </div>
+                    <p class="text-slate-400">
+                        Supervisory briefing tailored for European Central Bank (ECB), EBA, BaFin, and financial stability authorities.
+                    </p>
+                    <button onclick="openSupervisoryModal()" class="text-blue-400 hover:underline font-semibold block pt-2">Read Executive Briefing →</button>
+                </div>
+            </div>
+
+            <!-- Conclusion Box -->
+            <div class="helix-card rounded-2xl p-8 space-y-3 border border-[#FFA726]/30">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <span class="text-[#FFA726]">✦</span> Project Conclusion
+                </h3>
+                <p class="text-sm text-slate-300 leading-relaxed">
+                    This project provides a clear, segmentation-driven understanding of customer churn in European banking. By uncovering churn patterns across geography, demographics, and financial profiles, it equips decision-makers with actionable insights to design targeted, data-driven retention strategies rather than generic, inefficient campaigns.
+                </p>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ================= PRO COMMUNICATIVE AI ADVISOR CHAT BOX ================= -->
+    <div id="aiChatWidget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <!-- Floating Trigger Button -->
+        <button onclick="toggleChat()" id="chatTriggerBtn" class="flex items-center gap-3 bg-gradient-to-r from-[#FFA726] to-[#FF9100] text-black font-extrabold text-xs px-5 py-3.5 rounded-full shadow-[0_12px_30px_rgba(255,167,38,0.45)] hover:shadow-[0_15px_35px_rgba(255,167,38,0.65)] hover:scale-105 transition-all">
+            <span class="text-base">💬</span>
+            <span class="tracking-tight">Chat with Senior Banking Advisor</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-950 border border-emerald-400 animate-pulse"></span>
+        </button>
+
+        <!-- Chat Container Window (Initially Hidden) -->
+        <div id="chatBoxWindow" class="hidden mt-3 w-[370px] sm:w-[450px] h-[590px] helix-card rounded-2xl border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden bg-[#0A0E1A]">
+            
+            <!-- Chat Header -->
+            <div class="px-5 py-3.5 bg-[#0F1626] border-b border-white/10 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-[#FFA726] to-amber-300 flex items-center justify-center text-black font-extrabold text-xs shadow-md">
+                            EV
+                        </div>
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0F1626]"></span>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                            Elena Vance
+                            <span class="text-[9px] bg-[#FFA726]/15 text-[#FFA726] font-mono px-1.5 py-0.5 rounded border border-[#FFA726]/30">Senior Risk Advisor</span>
+                        </div>
+                        <div class="text-[10px] text-emerald-400 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            <span>Online · Quantitative Depositor Retention Desk</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <button onclick="clearChatHistory()" title="Clear Conversation" class="text-slate-400 hover:text-white text-xs p-1.5 hover:bg-white/5 rounded-lg transition">
+                        🔄
+                    </button>
+                    <button onclick="toggleChat()" title="Minimize" class="text-slate-400 hover:text-white text-sm p-1.5 hover:bg-white/5 rounded-lg transition">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Stream Area -->
+            <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3.5 text-xs leading-relaxed">
+                <!-- Welcome Bot Message -->
+                <div class="flex items-start space-x-2.5">
+                    <div class="w-7 h-7 rounded-full bg-[#FFA726] text-black font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-sm">
+                        EV
+                    </div>
+                    <div class="bg-slate-800/90 p-4 rounded-2xl rounded-tl-sm text-slate-200 border border-white/10 space-y-2.5 shadow-md">
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span>👋</span> Welcome to EuroBank Intelligence
+                        </div>
+                        <p class="text-slate-300 text-xs">
+                            I am <strong>Elena Vance</strong>, your senior client retention and portfolio risk specialist. I have audited all <strong>10,000 European customer accounts</strong> across France, Germany, and Spain.
+                        </p>
+                        <p class="text-[11px] text-[#FFA726] font-medium">
+                            How can I help you today? You can ask me to:
+                        </p>
+                        <div class="space-y-1.5 pt-1 text-[11px]">
+                            <button onclick="sendQuickPrompt('What is the recommended retention strategy for high-risk German depositors?')" class="w-full text-left bg-black/30 hover:bg-black/50 p-2 rounded-lg border border-white/5 text-slate-300 hover:text-white transition flex items-center justify-between">
+                                <span>🇩🇪 German Market Retention Strategy (32.4% Churn)</span>
+                                <span class="text-[#FFA726]">→</span>
+                            </button>
+                            <button onclick="sendQuickPrompt('Why are customers aged 46–60 churning at 51.12%?')" class="w-full text-left bg-black/30 hover:bg-black/50 p-2 rounded-lg border border-white/5 text-slate-300 hover:text-white transition flex items-center justify-between">
+                                <span>🎯 Pre-Retirement Vulnerability (Ages 46–60)</span>
+                                <span class="text-[#FFA726]">→</span>
+                            </button>
+                            <button onclick="sendQuickPrompt('How can our branch protect the €110.8M capital exposure?')" class="w-full text-left bg-black/30 hover:bg-black/50 p-2 rounded-lg border border-white/5 text-slate-300 hover:text-white transition flex items-center justify-between">
+                                <span>💰 High-Balance Capital Exposure Playbook (€110.8M)</span>
+                                <span class="text-[#FFA726]">→</span>
+                            </button>
+                            <button onclick="sendQuickPrompt('Explain how to use the Streamlit Analytics Tool')" class="w-full text-left bg-black/30 hover:bg-black/50 p-2 rounded-lg border border-white/5 text-slate-300 hover:text-white transition flex items-center justify-between">
+                                <span>⚡ Guide to Streamlit Multi-Filter Analytics</span>
+                                <span class="text-emerald-400">→</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Animated Typing Indicator (Hidden by default) -->
+                <div id="typingIndicator" class="hidden flex items-center space-x-2 text-slate-400 text-[11px] pl-9">
+                    <span class="flex items-center space-x-1 bg-slate-800/80 px-3 py-1.5 rounded-full border border-white/5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#FFA726] animate-typing-1"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#FFA726] animate-typing-2"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#FFA726] animate-typing-3"></span>
+                        <span class="ml-1.5 text-[10px] text-slate-300 font-medium">Elena is analyzing portfolio data...</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Quick Inquiry Chips (Clean no-scrollbar design) -->
+            <div class="px-3.5 py-2.5 bg-[#090D17] border-t border-white/10 flex gap-2 overflow-x-auto text-[10px] whitespace-nowrap no-scrollbar">
+                <button onclick="sendQuickPrompt('What is the overall churn rate and benchmark?')" class="bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-full border border-white/10 transition shrink-0">
+                    📊 Benchmark (20.37%)
+                </button>
+                <button onclick="sendQuickPrompt('Explain the 3 and 4 Product Bundling Paradox')" class="bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-full border border-white/10 transition shrink-0">
+                    📦 Product Paradox (82.7%+)
+                </button>
+                <button onclick="sendQuickPrompt('How does digital activity reduce customer churn?')" class="bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-full border border-white/10 transition shrink-0">
+                    📱 Inactivity (26.85%)
+                </button>
+                <button onclick="sendQuickPrompt('What are the key policy recommendations for ECB regulators?')" class="bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-full border border-white/10 transition shrink-0">
+                    🏛️ ECB Supervisory Insights
+                </button>
+            </div>
+
+            <!-- Chat Input Area -->
+            <div class="p-3.5 bg-[#0C1220] border-t border-white/10 flex items-center gap-2">
+                <input type="text" id="userChatInput" onkeydown="handleChatKey(event)" placeholder="Ask Elena about churn, accounts, retention..." class="flex-1 bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-[#FFA726] transition">
+                <button onclick="sendChatMessage()" class="bg-[#FFA726] hover:bg-[#FFB74D] text-black font-extrabold px-4 py-2.5 rounded-xl text-xs transition shadow-md flex items-center gap-1 shrink-0">
+                    <span>Send</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: ANALYTICS DASHBOARD -->
+    <div id="dashboardModal" class="fixed inset-0 z-50 hidden bg-black/80 modal-blur flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div class="helix-card rounded-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden border border-white/15 shadow-2xl">
+            <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-[#0B101D]">
+                <div class="flex items-center space-x-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#FFA726] animate-pulse"></span>
+                    <h3 class="text-base font-bold text-white tracking-tight">Interactive Banking Analytics Dashboard</h3>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="closeDashboardModal()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-left">
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-white/5">
+                        <div class="text-[10px] uppercase font-bold text-slate-400">Total Accounts</div>
+                        <div class="text-xl font-bold text-white mt-1">10,000</div>
+                        <div class="text-[10px] text-emerald-400">79.63% Retained</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-white/5">
+                        <div class="text-[10px] uppercase font-bold text-slate-400">Overall Churn</div>
+                        <div class="text-xl font-bold text-red-400 mt-1">20.37%</div>
+                        <div class="text-[10px] text-slate-400">2,037 Exits</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-white/5">
+                        <div class="text-[10px] uppercase font-bold text-slate-400">Germany Risk Index</div>
+                        <div class="text-xl font-bold text-amber-400 mt-1">1.59×</div>
+                        <div class="text-[10px] text-amber-400/90">32.44% Churn</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-white/5">
+                        <div class="text-[10px] uppercase font-bold text-slate-400">High-Value Churn</div>
+                        <div class="text-xl font-bold text-white mt-1">24.16%</div>
+                        <div class="text-[10px] text-red-400">≥ €119.8k accounts</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-white/5 col-span-2 sm:col-span-1">
+                        <div class="text-[10px] uppercase font-bold text-slate-400">Capital Exposure</div>
+                        <div class="text-xl font-bold text-blue-400 mt-1">€110.8M</div>
+                        <div class="text-[10px] text-slate-400">High-balance drain</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-white/5">
+                        <div class="text-xs font-bold text-white mb-2">Churn Rate by Jurisdiction (%)</div>
+                        <div class="h-52"><canvas id="modalGeoChart"></canvas></div>
+                    </div>
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-white/5">
+                        <div class="text-xs font-bold text-white mb-2">The Product Paradox (NumOfProducts)</div>
+                        <div class="h-52"><canvas id="modalProdChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/60 p-4 rounded-xl border border-white/5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs font-bold text-white">Granular Account Drill-Down & Triage</div>
+                        <button onclick="downloadCSV()" class="bg-[#FFA726] hover:bg-[#FFB74D] text-black text-[11px] font-bold px-3 py-1.5 rounded-lg transition">
+                            📥 Download Customer CSV
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto max-h-56">
+                        <table class="w-full text-left text-[11px] code-font">
+                            <thead class="bg-slate-950 text-slate-400 uppercase text-[9px]">
+                                <tr>
+                                    <th class="p-2.5">Customer ID</th>
+                                    <th class="p-2.5">Country</th>
+                                    <th class="p-2.5">Gender</th>
+                                    <th class="p-2.5">Age</th>
+                                    <th class="p-2.5">Tenure</th>
+                                    <th class="p-2.5">Balance (€)</th>
+                                    <th class="p-2.5">Products</th>
+                                    <th class="p-2.5">Active</th>
+                                    <th class="p-2.5">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800 text-slate-300" id="modalTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: FULL RESEARCH PAPER -->
+    <div id="paperModal" class="fixed inset-0 z-50 hidden bg-black/80 modal-blur flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div class="helix-card rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-white/15 shadow-2xl">
+            <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-[#0B101D]">
+                <h3 class="text-sm font-bold text-white">Official Research Paper & Methodology</h3>
+                <button onclick="closePaperModal()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-8 text-xs leading-relaxed text-slate-300 space-y-4">
+                <h1 class="text-xl font-bold text-white mb-2">Customer Segmentation & Churn Pattern Analytics in European Banking</h1>
+                <p class="text-xs text-[#FFA726] font-mono">10,000 Audited Records · France, Germany & Spain</p>
+                <div class="bg-slate-900 p-4 rounded-xl border border-white/5 space-y-2 text-slate-300">
+                    <h4 class="font-bold text-white text-sm">Abstract</h4>
+                    <p>Customer churn represents a significant challenge for retail banking because the loss of existing customers can reduce customer lifetime value, increase acquisition costs, and create revenue instability. This study presents a segmentation-driven analysis of customer churn in European banking using demographic, geographic, engagement, tenure, and financial characteristics. The overall observed churn rate is 20.37%. Germany records the highest observed churn rate at 32.44%, while customers aged 46–60 show particularly high churn, reaching 67.33% among German customers. Inactive customers show a 26.85% churn rate compared with 14.27% among active customers. High-balance customers have a 24.16% churn rate, and churned high-balance customers represent approximately €110.8 million in balance exposure.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: SUPERVISORY BRIEFING -->
+    <div id="supervisoryModal" class="fixed inset-0 z-50 hidden bg-black/80 modal-blur flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div class="helix-card rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-white/15 shadow-2xl">
+            <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-[#0B101D]">
+                <h3 class="text-sm font-bold text-white">Supervisory Executive Briefing for Government & Regulatory Bodies</h3>
+                <button onclick="closeSupervisoryModal()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-8 text-xs leading-relaxed text-slate-300 space-y-4">
+                <div class="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl text-amber-300">
+                    <strong>Prepared for:</strong> European Central Bank (ECB) Single Supervisory Mechanism (SSM), EBA, BaFin, and national supervisory authorities.
+                </div>
+                <h4 class="font-bold text-white text-sm">1. German Market Fragility & Depositor Portability</h4>
+                <p>German accounts exhibit 32.44% annual churn, indicating heightened competition from fintech platforms and open banking switching ease. Although Germany represents 25% of customers, it generates 39.96% of all exits.</p>
+                <h4 class="font-bold text-white text-sm">2. Senior Demographic Capital Flight (Age 46–60)</h4>
+                <p>Senior depositors approaching retirement demonstrate the highest churn (51.12% across Europe; 67.33% in Germany). This life stage represents the highest personal savings balances, creating significant balance sheet volatility.</p>
+                <h4 class="font-bold text-white text-sm">3. Liquidity Coverage Impact</h4>
+                <p>Churned high-balance customers represent €110.85M in departed deposits. Commercial lenders must integrate segment-level depositor flight into their annual ILAAP/ICAAP liquidity stress tests.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT & THREE.JS ENGINE -->
+    <script>
+        // Sample Customer Records for Table
+        const sampleRecords = [
+            {"CustomerId":15634602,"Geography":"France","Gender":"Female","Age":42,"Tenure":2,"Balance":0.0,"NumOfProducts":1,"IsActiveMember":1,"Exited":1},
+            {"CustomerId":15647311,"Geography":"Spain","Gender":"Female","Age":41,"Tenure":1,"Balance":83807.86,"NumOfProducts":1,"IsActiveMember":1,"Exited":0},
+            {"CustomerId":15619304,"Geography":"France","Gender":"Female","Age":42,"Tenure":8,"Balance":159660.8,"NumOfProducts":3,"IsActiveMember":0,"Exited":1},
+            {"CustomerId":15701354,"Geography":"France","Gender":"Female","Age":39,"Tenure":1,"Balance":0.0,"NumOfProducts":2,"IsActiveMember":0,"Exited":0},
+            {"CustomerId":15737888,"Geography":"Spain","Gender":"Female","Age":43,"Tenure":2,"Balance":125510.82,"NumOfProducts":1,"IsActiveMember":1,"Exited":0},
+            {"CustomerId":15574012,"Geography":"Spain","Gender":"Male","Age":44,"Tenure":8,"Balance":113755.78,"NumOfProducts":2,"IsActiveMember":0,"Exited":1},
+            {"CustomerId":15592531,"Geography":"France","Gender":"Male","Age":50,"Tenure":7,"Balance":0.0,"NumOfProducts":2,"IsActiveMember":1,"Exited":0},
+            {"CustomerId":15656148,"Geography":"Germany","Gender":"Female","Age":29,"Tenure":4,"Balance":115046.74,"NumOfProducts":4,"IsActiveMember":0,"Exited":1},
+            {"CustomerId":15792365,"Geography":"France","Gender":"Male","Age":44,"Tenure":4,"Balance":142051.07,"NumOfProducts":2,"IsActiveMember":1,"Exited":0},
+            {"CustomerId":15592389,"Geography":"France","Gender":"Male","Age":27,"Tenure":2,"Balance":134603.88,"NumOfProducts":1,"IsActiveMember":1,"Exited":0},
+            {"CustomerId":15767821,"Geography":"France","Gender":"Male","Age":31,"Tenure":6,"Balance":102016.72,"NumOfProducts":2,"IsActiveMember":0,"Exited":0},
+            {"CustomerId":15737173,"Geography":"Spain","Gender":"Male","Age":24,"Tenure":3,"Balance":0.0,"NumOfProducts":2,"IsActiveMember":0,"Exited":0},
+            {"CustomerId":15632264,"Geography":"France","Gender":"Female","Age":34,"Tenure":10,"Balance":0.0,"NumOfProducts":2,"IsActiveMember":0,"Exited":0},
+            {"CustomerId":15691483,"Geography":"France","Gender":"Female","Age":25,"Tenure":5,"Balance":0.0,"NumOfProducts":2,"IsActiveMember":0,"Exited":0},
+            {"CustomerId":15600882,"Geography":"Spain","Gender":"Female","Age":35,"Tenure":7,"Balance":0.0,"NumOfProducts":2,"IsActiveMember":1,"Exited":0},
+            {"CustomerId":15643966,"Geography":"Germany","Gender":"Male","Age":45,"Tenure":3,"Balance":143129.41,"NumOfProducts":2,"IsActiveMember":1,"Exited":0},
+            {"CustomerId":15737452,"Geography":"Germany","Gender":"Male","Age":58,"Tenure":1,"Balance":132602.88,"NumOfProducts":1,"IsActiveMember":0,"Exited":1}
+        ];
+
+        function populateModalTable() {
+            const tbody = document.getElementById('modalTableBody');
+            tbody.innerHTML = '';
+            sampleRecords.forEach(r => {
+                const tr = document.createElement('tr');
+                const isChurn = r.Exited === 1;
+                tr.className = isChurn ? 'bg-red-500/5' : 'hover:bg-slate-800/40';
+                tr.innerHTML = `
+                    <td class="p-2.5 text-white font-medium">${r.CustomerId}</td>
+                    <td class="p-2.5">${r.Geography}</td>
+                    <td class="p-2.5">${r.Gender}</td>
+                    <td class="p-2.5">${r.Age}</td>
+                    <td class="p-2.5">${r.Tenure} yrs</td>
+                    <td class="p-2.5">€${r.Balance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td class="p-2.5">${r.NumOfProducts}</td>
+                    <td class="p-2.5">${r.IsActiveMember === 1 ? '<span class="text-emerald-400">Yes</span>' : '<span class="text-slate-500">No</span>'}</td>
+                    <td class="p-2.5">${isChurn ? '<span class="text-red-400 font-bold">CHURNED</span>' : '<span class="text-emerald-400">RETAINED</span>'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        populateModalTable();
+
+        function downloadCSV() {
+            let csv = "CustomerId,Geography,Gender,Age,Tenure,Balance,NumOfProducts,IsActiveMember,Exited\n";
+            sampleRecords.forEach(r => {
+                csv += `${r.CustomerId},${r.Geography},${r.Gender},${r.Age},${r.Tenure},${r.Balance},${r.NumOfProducts},${r.IsActiveMember},${r.Exited}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'european_bank_churn_sample.csv');
+            a.click();
+        }
+
+        function reloadStreamlit() {
+            const frame = document.getElementById('streamlitFrame');
+            frame.src = frame.src;
+        }
+
+        function requestAccess() {
+            const email = document.getElementById('emailInput').value;
+            if(email) {
+                alert(`Access request registered for ${email}. Launching analytics dashboard...`);
+                openDashboardModal();
+            } else {
+                alert('Please enter your work email or bank ID.');
+            }
+        }
+
+        function scrollToSection(id) {
+            if(id === 'hero') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+            const el = document.getElementById(id);
+            if(el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Modal Controls
+        function openDashboardModal() {
+            document.getElementById('dashboardModal').classList.remove('hidden');
+            initModalCharts();
+        }
+        function closeDashboardModal() {
+            document.getElementById('dashboardModal').classList.add('hidden');
+        }
+        function openPaperModal() {
+            document.getElementById('paperModal').classList.remove('hidden');
+        }
+        function closePaperModal() {
+            document.getElementById('paperModal').classList.add('hidden');
+        }
+        function openSupervisoryModal() {
+            document.getElementById('supervisoryModal').classList.remove('hidden');
+        }
+        function closeSupervisoryModal() {
+            document.getElementById('supervisoryModal').classList.add('hidden');
+        }
+
+        let modalChartsInited = false;
+        function initModalCharts() {
+            if (modalChartsInited) return;
+            modalChartsInited = true;
+
+            new Chart(document.getElementById('modalGeoChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Germany', 'Spain', 'France'],
+                    datasets: [{
+                        data: [32.44, 16.67, 16.15],
+                        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('modalProdChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['1 Product', '2 Products', '3 Products', '4 Products'],
+                    datasets: [{
+                        data: [27.71, 7.58, 82.71, 100.0],
+                        backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#991b1b'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        // ================= PRO COMMUNICATIVE AI ADVISOR LOGIC =================
+        let chatOpen = false;
+        function toggleChat() {
+            chatOpen = !chatOpen;
+            const chatBox = document.getElementById('chatBoxWindow');
+            if(chatOpen) {
+                chatBox.classList.remove('hidden');
+                document.getElementById('userChatInput').focus();
+            } else {
+                chatBox.classList.add('hidden');
+            }
+        }
+
+        function clearChatHistory() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="flex items-start space-x-2.5">
+                    <div class="w-7 h-7 rounded-full bg-[#FFA726] text-black font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-sm">
+                        EV
+                    </div>
+                    <div class="bg-slate-800/90 p-4 rounded-2xl rounded-tl-sm text-slate-200 border border-white/10 space-y-2.5 shadow-md">
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span>👋</span> Conversation Reset
+                        </div>
+                        <p class="text-slate-300 text-xs">
+                            Hello! I am ready for your next inquiry. Ask me about retention strategies, customer risk profiles, country comparisons, or regulatory guidelines.
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleChatKey(e) {
+            if(e.key === 'Enter') sendChatMessage();
+        }
+
+        function sendQuickPrompt(text) {
+            document.getElementById('userChatInput').value = text;
+            sendChatMessage();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('userChatInput');
+            const q = input.value.trim();
+            if(!q) return;
+
+            const chatMessages = document.getElementById('chatMessages');
+            const typingIndicator = document.getElementById('typingIndicator');
+
+            // Add customer user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'flex justify-end';
+            userMsg.innerHTML = `
+                <div class="bg-gradient-to-r from-[#FFA726] to-[#FF9800] text-black font-semibold p-3.5 rounded-2xl rounded-tr-sm max-w-[85%] text-xs shadow-md">
+                    ${escapeHtml(q)}
+                </div>
+            `;
+            chatMessages.appendChild(userMsg);
+            input.value = '';
+
+            // Show typing indicator
+            if (typingIndicator) {
+                chatMessages.appendChild(typingIndicator);
+                typingIndicator.classList.remove('hidden');
+            }
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Generate AI Pro Communicative Response
+            setTimeout(() => {
+                if (typingIndicator) {
+                    typingIndicator.classList.add('hidden');
+                }
+
+                const botMsg = document.createElement('div');
+                botMsg.className = 'flex items-start space-x-2.5';
+                const response = getAiAnalystAnswer(q);
+                
+                botMsg.innerHTML = `
+                    <div class="w-7 h-7 rounded-full bg-[#FFA726] text-black font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                        EV
+                    </div>
+                    <div class="bg-slate-800/95 p-4 rounded-2xl rounded-tl-sm text-slate-200 border border-white/10 space-y-2.5 max-w-[88%] shadow-lg">
+                        ${response.text}
+                        ${response.actions ? `<div class="pt-2 flex flex-wrap gap-2 border-t border-white/10">${response.actions}</div>` : ''}
+                        ${response.followUps ? `
+                            <div class="pt-2 space-y-1">
+                                <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Suggested Next Steps:</div>
+                                <div class="flex flex-wrap gap-1.5">${response.followUps}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                chatMessages.appendChild(botMsg);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 550);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function getAiAnalystAnswer(query) {
+            const q = query.toLowerCase();
+
+            // Greeting
+            if (q.match(/\b(hi|hello|hey|good morning|good afternoon|good evening|who are you|help)\b/)) {
+                return {
+                    text: `
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span>👋</span> Good day! How can I assist your team today?
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            I am <strong>Elena Vance</strong>, Senior Portfolio Retention and Risk Advisor for EuroBank Intelligence. I assist branch executives, risk officers, and relationship managers in:
+                        </p>
+                        <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                            <li>Diagnosing depositor flight vectors across France, Germany, and Spain.</li>
+                            <li>Protecting high-net-worth balances (€110.85M total capital exposure).</li>
+                            <li>Implementing targeted retention playbooks for pre-retiree (age 46–60) depositors.</li>
+                        </ul>
+                    `,
+                    followUps: `
+                        <button onclick="sendQuickPrompt('What is the recommended retention strategy for high-risk German depositors?')" class="bg-black/40 hover:bg-black/60 text-[#FFA726] border border-[#FFA726]/30 px-2.5 py-1 rounded-full text-[10px] transition">🇩🇪 German Market Strategy</button>
+                        <button onclick="sendQuickPrompt('Why are customers aged 46–60 churning at 51.12%?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">🎯 Age 46–60 Vulnerability</button>
+                    `
+                };
+            }
+
+            // Retention Playbook & Strategy
+            if (q.includes('strategy') || q.includes('reduce') || q.includes('retention') || q.includes('playbook') || q.includes('fix') || q.includes('prevent')) {
+                return {
+                    text: `
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span class="text-emerald-400">🛡️</span> Actionable 4-Pillar Retention Strategy
+                        </div>
+                        <p class="text-xs text-slate-300">Based on the 10,000-account empirical audit, here is the prioritized action plan for branch managers and executives:</p>
+                        <ol class="list-decimal pl-4 space-y-1.5 text-xs text-slate-300">
+                            <li><strong>Pre-Retirement Wealth Advisory (Ages 46–60):</strong> Assign dedicated private wealth advisors to depositors aged 46–60 before they enter pension decumulation. (Stem the 51.12% churn rate).</li>
+                            <li><strong>German Retention Desk:</strong> Audit secondary account fees and competitor rate step-downs to counteract local digital neobank poaching in Germany.</li>
+                            <li><strong>Automated Inactivity Triggers:</strong> Flag accounts with zero debit or mobile log-ins for &gt;45 days to initiate outreach before dormancy turns into exit.</li>
+                            <li><strong>Rationalize Multi-Product Bundles:</strong> Eliminate punitive interest rate step-downs on 3rd and 4th products that cause 82.7%+ churn.</li>
+                        </ol>
+                    `,
+                    actions: `
+                        <button onclick="downloadCSV()" class="bg-[#FFA726] hover:bg-[#FFB74D] text-black font-bold px-3 py-1.5 rounded-lg text-[10px] transition">📥 Download High-Risk Accounts CSV</button>
+                    `,
+                    followUps: `
+                        <button onclick="sendQuickPrompt('Explain the 3 and 4 Product Bundling Paradox')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Why 3+ Products Churn</button>
+                        <button onclick="sendQuickPrompt('What is the €110.8M capital exposure?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Capital Exposure Details</button>
+                    `
+                };
+            }
+
+            // German Risk
+            if (q.includes('germany') || q.includes('german') || q.includes('de')) {
+                return {
+                    text: `
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span class="text-red-400">🇩🇪</span> German Market Risk Analysis
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            Germany represents the single most acute geographic risk in the European portfolio:
+                        </p>
+                        <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                            <li><strong>Churn Rate:</strong> <span class="text-red-400 font-bold">32.44%</span> (814 departures out of 2,509 accounts).</li>
+                            <li><strong>Geographic Risk Index (GRI):</strong> <span class="text-amber-400 font-bold">1.59×</span> baseline risk.</li>
+                            <li><strong>Volume Share:</strong> Accounts for <strong>39.96%</strong> of all departures across Europe, despite holding only 25% of customers.</li>
+                            <li><strong>Age 46–60 Crisis:</strong> Escalates to an unprecedented <span class="text-red-400 font-bold">67.33%</span> churn among German depositors aged 46–60.</li>
+                        </ul>
+                        <p class="text-[11px] text-slate-400"><em>Key Takeaway:</em> German clients are highly rate-sensitive and prone to digital neobank account migration (N26, Trade Republic).</p>
+                    `,
+                    actions: `
+                        <button onclick="openDashboardModal()" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-3 py-1.5 rounded-lg text-[10px] transition">📊 View Country Matrix Modal</button>
+                    `,
+                    followUps: `
+                        <button onclick="sendQuickPrompt('Why are customers aged 46–60 churning at 51.12%?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Age 46-60 Hotspot</button>
+                        <button onclick="sendQuickPrompt('How does Spain and France compare to Germany?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Spain & France Benchmark</button>
+                    `
+                };
+            }
+
+            // Pre-Retirees (Age 46–60)
+            if (q.includes('age') || q.includes('46') || q.includes('60') || q.includes('retire') || q.includes('demographic')) {
+                return {
+                    text: `
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span class="text-amber-400">🎯</span> Pre-Retirement Vulnerability (Ages 46–60)
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            Depositors aged <strong>46–60</strong> represent the primary demographic vulnerability across Europe:
+                        </p>
+                        <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                            <li><strong>European Average Churn:</strong> <span class="text-red-400 font-bold">51.12%</span> (842 exits out of 1,647 customers).</li>
+                            <li><strong>Germany Peak:</strong> <span class="text-red-400 font-bold">67.33%</span> churn.</li>
+                            <li><strong>France Peak:</strong> 45.79% churn.</li>
+                            <li><strong>Spain Peak:</strong> 40.66% churn.</li>
+                            <li><strong>Contrast with Young Adults:</strong> Customers &lt;30 churn at only <strong>7.56%</strong>!</li>
+                        </ul>
+                        <p class="text-xs text-slate-300 pt-1">
+                            <em>Financial Impact:</em> This group holds the highest average personal liquidity and pension assets. Their departure severely impacts branch deposit reserves.
+                        </p>
+                    `,
+                    followUps: `
+                        <button onclick="sendQuickPrompt('What is the €110.8M capital exposure?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">💰 Capital Exposure Details</button>
+                        <button onclick="sendQuickPrompt('What is the recommended retention strategy for high-risk German depositors?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">🛡️ Retention Playbook</button>
+                    `
+                };
+            }
+
+            // High-Balance & Capital Exposure
+            if (q.includes('balance') || q.includes('110') || q.includes('exposure') || q.includes('capital') || q.includes('money') || q.includes('wealth')) {
+                return {
+                    text: `
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span class="text-blue-400">💰</span> Capital Exposure & High-Balance Flight
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            The financial profile analysis reveals critical liquidity concentration:
+                        </p>
+                        <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                            <li><strong>High-Balance Churn Rate:</strong> <span class="text-white font-bold">24.16%</span> among funded accounts with balance &ge; €119,839.69.</li>
+                            <li><strong>Capital Exposure Pool:</strong> <span class="text-blue-400 font-bold">€110.85 Million</span> in balances drained by high-balance churners.</li>
+                            <li><strong>Total Balance Drained:</strong> <span class="text-white font-bold">€185.59 Million</span> across all 2,037 departed accounts.</li>
+                            <li><strong>Balance Inversion:</strong> Churned customers had a <strong>higher average balance (€91,108.54)</strong> than retained customers (€72,745.30).</li>
+                        </ul>
+                        <p class="text-[11px] text-slate-400"><em>Prudential Note:</em> Losing high-balance clients directly strains the bank's Liquidity Coverage Ratio (LCR).</p>
+                    `,
+                    actions: `
+                        <button onclick="downloadCSV()" class="bg-[#FFA726] hover:bg-[#FFB74D] text-black font-bold px-3 py-1.5 rounded-lg text-[10px] transition">📥 Export High-Balance Exits (CSV)</button>
+                    `,
+                    followUps: `
+                        <button onclick="sendQuickPrompt('What is the recommended retention strategy for high-risk German depositors?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Retention Solution</button>
+                        <button onclick="sendQuickPrompt('Explain the 3 and 4 Product Bundling Paradox')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Product Impact</button>
+                    `
+                };
+            }
+
+            // Product Paradox
+            if (q.includes('product') || q.includes('bundle') || q.includes('paradox') || q.includes('cross-sell')) {
+                return {
+                    text: `
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span class="text-purple-400">📦</span> The Multi-Product Bundling Paradox
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            Our empirical audit identified an extreme non-linear cliff in product ownership:
+                        </p>
+                        <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                            <li><strong>1 Product:</strong> 27.71% churn (Basic primary account).</li>
+                            <li><strong>2 Products:</strong> <span class="text-emerald-400 font-bold">7.58% churn</span> <em>(Optimal retention anchor!)</em>.</li>
+                            <li><strong>3 Products:</strong> <span class="text-red-400 font-bold">82.71% churn</span> ⚠️ (Extreme hazard zone).</li>
+                            <li><strong>4 Products:</strong> <span class="text-red-500 font-bold">100.00% churn</span> 🚨 (Complete portfolio loss).</li>
+                        </ul>
+                        <p class="text-[11px] text-slate-300 pt-1">
+                            <em>Root Cause:</em> Customers holding 3 or 4 products often enroll due to promotional teaser rates. When rates revert or maintenance fees compound, customers defect in mass.
+                        </p>
+                    `,
+                    followUps: `
+                        <button onclick="sendQuickPrompt('How does digital activity reduce customer churn?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Digital Engagement Impact</button>
+                        <button onclick="sendQuickPrompt('What is the recommended retention strategy for high-risk German depositors?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Retention Solution</button>
+                    `
+                };
+            }
+
+            // Digital Engagement / Activity
+            if (q.includes('active') || q.includes('inactive') || q.includes('digital') || q.includes('engagement') || q.includes('app')) {
+                return {
+                    text: `
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span class="text-emerald-400">📱</span> Digital Engagement & Membership Impact
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            Account activity is the strongest behavioral buffer against customer attrition:
+                        </p>
+                        <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                            <li><strong>Inactive Members:</strong> <span class="text-red-400 font-bold">26.85% churn</span> (1,302 exits).</li>
+                            <li><strong>Active Members:</strong> <span class="text-emerald-400 font-bold">14.27% churn</span> (735 exits).</li>
+                            <li><strong>Risk Reduction:</strong> Maintaining digital engagement reduces churn probability by <span class="text-emerald-400 font-bold">46.8%</span>.</li>
+                        </ul>
+                        <p class="text-xs text-slate-300 pt-1">
+                            <em>Branch Recommendation:</em> Deploy automated re-engagement notifications when a customer does not log in or swipe their card for 45 days.
+                        </p>
+                    `,
+                    followUps: `
+                        <button onclick="sendQuickPrompt('What is the overall churn rate and benchmark?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Overall KPI Benchmarks</button>
+                        <button onclick="sendQuickPrompt('Explain how to use the Streamlit Analytics Tool')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Streamlit Analytics</button>
+                    `
+                };
+            }
+
+            // Streamlit Guidance
+            if (q.includes('streamlit') || q.includes('tool') || q.includes('dashboard') || q.includes('filter')) {
+                return {
+                    text: `
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span class="text-emerald-400">⚡</span> Streamlit Analytical Engine Guide
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            The Streamlit application runs live on a dedicated server on port 8501. It is designed for hands-on quantitative exploration:
+                        </p>
+                        <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                            <li><strong>Sidebar Filters:</strong> Slice and dice by Country, Gender, Age group, Credit Score, Balance Tier, and Product count.</li>
+                            <li><strong>Live Recalculation:</strong> Dynamic KPI counters update immediately with each filter adjustment.</li>
+                            <li><strong>Interactive Plots:</strong> Features Plotly scatter plots (Balance vs Salary) and cross-tab heatmaps.</li>
+                            <li><strong>Account Triage:</strong> Filter high-priority accounts and download customized CSV files.</li>
+                        </ul>
+                    `,
+                    actions: `
+                        <button onclick="openDashboardModal()" class="bg-[#FFA726] hover:bg-[#FFB74D] text-black font-semibold px-3 py-1.5 rounded-lg text-[10px] transition">📊 Open Analytics Preview</button>
+                    `,
+                    followUps: `
+                        <button onclick="sendQuickPrompt('What is the overall churn rate and benchmark?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">KPI Benchmarks</button>
+                        <button onclick="sendQuickPrompt('What is the recommended retention strategy for high-risk German depositors?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Retention Playbook</button>
+                    `
+                };
+            }
+
+            // Supervisory & ECB
+            if (q.includes('ecb') || q.includes('supervisory') || q.includes('regulat') || q.includes('government') || q.includes('bafin')) {
+                return {
+                    text: `
+                        <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                            <span class="text-blue-400">🏛️</span> Supervisory & Regulatory Briefing
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            Prepared for the European Central Bank (ECB) SSM, EBA, BaFin, and ACPR supervisors:
+                        </p>
+                        <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                            <li><strong>ICAAP / ILAAP Stress Testing:</strong> Regulators recommend banks stress-test for segment-specific depositor flight (especially German accounts and senior demographics).</li>
+                            <li><strong>Liquidity Coverage Ratio (LCR):</strong> The €110.85M balance flight among premium depositors highlights operational deposit volatility.</li>
+                            <li><strong>TCF & Consumer Fairness:</strong> Supervisory review of promotional multi-product bundling to eliminate deceptive teaser-rate cliffs.</li>
+                        </ul>
+                    `,
+                    actions: `
+                        <button onclick="openSupervisoryModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-lg text-[10px] transition">📑 Read Complete Supervisory Briefing</button>
+                    `
+                };
+            }
+
+            // Default Synthesized Intelligent Response
+            return {
+                text: `
+                    <div class="font-bold text-white text-[13px] flex items-center gap-1.5">
+                        <span class="text-[#FFA726]">📊</span> Quantitative Portfolio Diagnostic
+                    </div>
+                    <p class="text-xs text-slate-300">
+                        In response to your query regarding <em>"${escapeHtml(query)}"</em>:
+                    </p>
+                    <p class="text-xs text-slate-300">
+                        The 10,000-customer European banking dataset exhibits an overall baseline churn rate of <strong>20.37%</strong> (2,037 departures). Our multi-dimensional segmentation isolates three acute vulnerability vectors:
+                    </p>
+                    <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                        <li><strong>German Jurisdiction:</strong> 32.44% churn rate (GRI 1.59×).</li>
+                        <li><strong>Pre-Retirees (Age 46–60):</strong> 51.12% European churn (67.33% in Germany).</li>
+                        <li><strong>High-Balance Capital Exposure:</strong> €110.85 Million at risk among accounts &ge; €119.8k.</li>
+                    </ul>
+                    <p class="text-xs text-slate-300">
+                        Would you like me to walk you through our retention playbook, customer account drill-down, or launch the interactive Streamlit engine?
+                    </p>
+                `,
+                actions: `
+                    <button onclick="openDashboardModal()" class="bg-[#FFA726] hover:bg-[#FFB74D] text-black font-semibold px-3 py-1.5 rounded-lg text-[10px] transition">📊 View Analytics Dashboard</button>
+                    <button onclick="downloadCSV()" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-3 py-1.5 rounded-lg text-[10px] transition">📥 Download CSV</button>
+                `,
+                followUps: `
+                    <button onclick="sendQuickPrompt('What is the recommended retention strategy for high-risk German depositors?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Retention Playbook</button>
+                    <button onclick="sendQuickPrompt('What is the €110.8M capital exposure?')" class="bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-full text-[10px] transition">Capital Exposure</button>
+                `
+            };
+        }
+
+        // ================= THREE.JS 3D DOUBLE HELIX ENGINE =================
+        const canvas = document.getElementById('helix-canvas');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x060912, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 42);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.35;
+
+        // Postprocessing (Unreal Bloom)
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.4, 0.5, 0.65
+        );
+        const composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0x0a1128, 1.8));
+        const dirLight = new THREE.DirectionalLight(0x38bdf8, 2.0);
+        dirLight.position.set(20, 40, 20);
+        scene.add(dirLight);
+
+        const warmLight = new THREE.PointLight(0xffa726, 3.5, 60);
+        warmLight.position.set(0, 0, 15);
+        scene.add(warmLight);
+
+        // Helix Geometry
+        const helixGroup = new THREE.Group();
+        scene.add(helixGroup);
+
+        const turns = 4.5;
+        const totalHeight = 85;
+        const radius = 5.2;
+        const pointsCount = 180;
+        const rungsCount = 55;
+
+        const spinePoints1 = [];
+        const spinePoints2 = [];
+
+        for (let i = 0; i <= pointsCount; i++) {
+            const t = (i / pointsCount) * Math.PI * 2 * turns;
+            const y = (i / pointsCount) * totalHeight - (totalHeight / 2);
+            spinePoints1.push(new THREE.Vector3(Math.cos(t) * radius, y, Math.sin(t) * radius));
+            spinePoints2.push(new THREE.Vector3(Math.cos(t + Math.PI) * radius, y, Math.sin(t + Math.PI) * radius));
+        }
+
+        const curve1 = new THREE.CatmullRomCurve3(spinePoints1);
+        const curve2 = new THREE.CatmullRomCurve3(spinePoints2);
+
+        const titaniumMat = new THREE.MeshStandardMaterial({
+            color: 0x1c212d,
+            metalness: 0.92,
+            roughness: 0.25
+        });
+
+        const amberGlowMat = new THREE.MeshStandardMaterial({
+            color: 0xffaa00,
+            emissive: 0xff8c00,
+            emissiveIntensity: 2.8,
+            roughness: 0.2,
+            metalness: 0.1
+        });
+
+        const chromeMat = new THREE.MeshStandardMaterial({
+            color: 0x334155,
+            metalness: 0.95,
+            roughness: 0.15
+        });
+
+        helixGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve1, 160, 0.45, 12, false), titaniumMat));
+        helixGroup.add(new THREE.Mesh(new THREE.TubeGeometry(curve2, 160, 0.45, 12, false), titaniumMat));
+
+        for (let i = 0; i <= rungsCount; i++) {
+            const t = (i / rungsCount) * Math.PI * 2 * turns;
+            const y = (i / rungsCount) * totalHeight - (totalHeight / 2);
+            
+            const p1 = new THREE.Vector3(Math.cos(t) * radius, y, Math.sin(t) * radius);
+            const p2 = new THREE.Vector3(Math.cos(t + Math.PI) * radius, y, Math.sin(t + Math.PI) * radius);
+            
+            const rungVector = new THREE.Vector3().subVectors(p2, p1);
+            const length = rungVector.length();
+            const midpoint = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+
+            const rungGroup = new THREE.Group();
+            rungGroup.position.copy(midpoint);
+            rungGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), rungVector.clone().normalize());
+
+            // Outer sleeve
+            rungGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, length * 0.96, 12), titaniumMat));
+            // Glowing core
+            rungGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, length * 0.28, 16), amberGlowMat));
+
+            // Chrome ring joints
+            const ring1 = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.08, 8, 24), chromeMat);
+            ring1.position.y = length * 0.16;
+            ring1.rotation.x = Math.PI / 2;
+            const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.08, 8, 24), chromeMat);
+            ring2.position.y = -length * 0.16;
+            ring2.rotation.x = Math.PI / 2;
+            rungGroup.add(ring1);
+            rungGroup.add(ring2);
+
+            helixGroup.add(rungGroup);
+        }
+
+        // Ambient dust particles
+        const particleGeom = new THREE.BufferGeometry();
+        const pCount = 350;
+        const pPositions = new Float32Array(pCount * 3);
+        for(let i=0; i<pCount*3; i+=3) {
+            pPositions[i] = (Math.random() - 0.5) * 80;
+            pPositions[i+1] = (Math.random() - 0.5) * 90;
+            pPositions[i+2] = (Math.random() - 0.5) * 60;
+        }
+        particleGeom.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+        const particles = new THREE.Points(particleGeom, new THREE.PointsMaterial({
+            color: 0xffaa33,
+            size: 0.25,
+            transparent: true,
+            opacity: 0.4
+        }));
+        scene.add(particles);
+
+        helixGroup.rotation.z = -0.52;
+        helixGroup.rotation.x = 0.35;
+        helixGroup.position.set(4, 0, 0);
+
+        // Smooth Scroll Choreography
+        let currentScroll = 0;
+        let targetScroll = 0;
+
+        window.addEventListener('scroll', () => {
+            const trackHeight = document.getElementById('scroll-track').offsetHeight;
+            const scrollPos = window.scrollY;
+            targetScroll = Math.max(0, Math.min(1, scrollPos / (trackHeight - window.innerHeight)));
+        });
+
+        const stage1 = document.getElementById('stage-1');
+        const stage2 = document.getElementById('stage-2');
+        const stage3 = document.getElementById('stage-3');
+        const stage4 = document.getElementById('stage-4');
+
+        function updateStageVisibility(progress) {
+            if (progress <= 0.18) {
+                stage1.style.opacity = (1 - (progress / 0.18)).toFixed(3);
+                stage1.style.transform = `translateY(${-progress * 120}px)`;
+                stage1.style.pointerEvents = progress < 0.15 ? 'auto' : 'none';
+            } else {
+                stage1.style.opacity = '0';
+                stage1.style.pointerEvents = 'none';
+            }
+
+            if (progress > 0.18 && progress <= 0.52) {
+                const p2 = (progress - 0.18) / (0.52 - 0.18);
+                const op = p2 < 0.4 ? p2 / 0.4 : (p2 > 0.75 ? (1 - p2) / 0.25 : 1);
+                stage2.style.opacity = op.toFixed(3);
+                stage2.style.transform = `translateY(${(1 - p2) * 20 - 10}px)`;
+                stage2.style.pointerEvents = op > 0.4 ? 'auto' : 'none';
+            } else {
+                stage2.style.opacity = '0';
+                stage2.style.pointerEvents = 'none';
+            }
+
+            if (progress > 0.50 && progress <= 0.82) {
+                const p3 = (progress - 0.50) / (0.82 - 0.50);
+                const op = p3 < 0.25 ? p3 / 0.25 : (p3 > 0.8 ? (1 - p3) / 0.2 : 1);
+                stage3.style.opacity = op.toFixed(3);
+                stage3.style.transform = `scale(${0.96 + op * 0.04})`;
+                stage3.style.pointerEvents = op > 0.4 ? 'auto' : 'none';
+            } else {
+                stage3.style.opacity = '0';
+                stage3.style.pointerEvents = 'none';
+            }
+
+            if (progress > 0.80) {
+                const p4 = (progress - 0.80) / 0.20;
+                stage4.style.opacity = Math.min(1, p4 * 1.5).toFixed(3);
+                stage4.style.transform = `translateY(${(1 - p4) * 20}px)`;
+                stage4.style.pointerEvents = 'auto';
+            } else {
+                stage4.style.opacity = '0';
+                stage4.style.pointerEvents = 'none';
+            }
+        }
+
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            currentScroll += (targetScroll - currentScroll) * 0.065;
+            updateStageVisibility(currentScroll);
+
+            const elapsedTime = clock.getElapsedTime();
+            const p = currentScroll;
+
+            if (p < 0.35) {
+                const t = p / 0.35;
+                camera.position.x = THREE.MathUtils.lerp(0, 7.5, t);
+                camera.position.y = THREE.MathUtils.lerp(0, 3.2, t);
+                camera.position.z = THREE.MathUtils.lerp(42, 28, t);
+                helixGroup.position.x = THREE.MathUtils.lerp(4, -3.5, t);
+                helixGroup.rotation.y = elapsedTime * 0.15 + t * 1.2;
+            } else if (p < 0.72) {
+                const t = (p - 0.35) / (0.72 - 0.35);
+                camera.position.x = THREE.MathUtils.lerp(7.5, 0.0, t);
+                camera.position.y = THREE.MathUtils.lerp(3.2, 0.0, t);
+                camera.position.z = THREE.MathUtils.lerp(28, 13.5, t);
+                helixGroup.position.x = THREE.MathUtils.lerp(-3.5, 0.0, t);
+                helixGroup.rotation.y = elapsedTime * 0.15 + 1.2 + t * 1.4;
+                bloomPass.strength = THREE.MathUtils.lerp(1.4, 2.8, t);
+            } else {
+                const t = (p - 0.72) / (1.0 - 0.72);
+                camera.position.x = THREE.MathUtils.lerp(0.0, 0.0, t);
+                camera.position.y = THREE.MathUtils.lerp(0.0, -5.5, t);
+                camera.position.z = THREE.MathUtils.lerp(13.5, 46, t);
+                helixGroup.position.x = 0;
+                helixGroup.position.y = THREE.MathUtils.lerp(0, 6.0, t);
+                helixGroup.rotation.y = elapsedTime * 0.15 + 2.6 + t * 0.8;
+                bloomPass.strength = THREE.MathUtils.lerp(2.8, 1.2, t);
+            }
+
+            helixGroup.rotation.z = -0.52 + Math.sin(elapsedTime * 0.5) * 0.03;
+            particles.rotation.y = elapsedTime * 0.02;
+
+            composer.render();
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

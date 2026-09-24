@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+*$py.class
+extracted_research_paper.txt
+research_paper_full.txt

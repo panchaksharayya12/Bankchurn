@@ -13,12 +13,10 @@
 Click any link below to open or download the deliverable directly in your browser:
 
 - **Live Interactive Web Portal (Scrolltide Helix 3D WebGL):**  
-  Direct Live Website: https://panchaksharayya12.github.io/Bankchurn/  
-  Local Development Server: http://localhost:3000
+  Direct Link: https://panchaksharayya12.github.io/Bankchurn/
 
 - **Live Streamlit Analytics Engine (24/7 Cloud Application):**  
-  Direct Live App: https://panchaksharayya12-bankchurn-app-kwieia.streamlit.app/  
-  Local Development Server: http://localhost:8501
+  Direct Link: https://panchaksharayya12-bankchurn-app-kwieia.streamlit.app/
 
 - **PowerPoint Presentation (10 Slides):**  
   Direct File Download: https://github.com/panchaksharayya12/Bankchurn/raw/main/Presentation_Customer_Segmentation_and_Churn.pptx  
@@ -48,8 +46,7 @@ Click any link below to open or download the deliverable directly in your browse
 
 - **Streamlit Analytics Engine Python Source Code:**  
   Direct Link: https://github.com/panchaksharayya12/Bankchurn/blob/main/app.py  
-  Live Cloud Application: https://panchaksharayya12-bankchurn-app-kwieia.streamlit.app/  
-  Local Streamlit Server: http://localhost:8501
+  Live Cloud Application: https://panchaksharayya12-bankchurn-app-kwieia.streamlit.app/
 
 - **PowerPoint Generator Python Script:**  
   Direct Link: https://github.com/panchaksharayya12/Bankchurn/blob/main/create_presentation.py
@@ -157,20 +154,19 @@ Models were evaluated on an 80/20 stratified validation split:
 - Python 3.9+
 - Standard data science libraries: streamlit, pandas, numpy, plotly, python-pptx
 
-### 1. Launch Main Web Portal (Port 3000):
+### 1. Web Portal Access:
+- **Live Online Portal (GitHub Pages):** https://panchaksharayya12.github.io/Bankchurn/
+- **Local Development (Optional):**
 ```bash
-# In the repository directory:
 python -m http.server 3000
 ```
-Open your browser and navigate to: http://localhost:3000  
-Or open online via GitHub Pages: https://panchaksharayya12.github.io/Bankchurn/
 
-### 2. Launch Streamlit Analytics Engine (Port 8501):
+### 2. Streamlit Analytics Engine Access:
+- **Live 24/7 Cloud Application:** https://panchaksharayya12-bankchurn-app-kwieia.streamlit.app/
+- **Local Development (Optional):**
 ```bash
-# In a separate terminal:
 streamlit run app.py --server.port 8501
 ```
-Open your browser and navigate to: http://localhost:8501
 
 ### 3. Re-Generate PowerPoint Presentation:
 ```bash

@@ -8,7 +8,7 @@ from pathlib import Path
 # Set page configuration
 st.set_page_config(
     page_title="European Banking Churn Analytics",
-    page_icon="🏦",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -129,7 +129,7 @@ BASE_CHURN_RATE = df_raw['Exited'].mean() * 100
 # ================= SIDEBAR FILTERS =================
 with st.sidebar:
     st.image("https://img.icons8.com/isometric/100/bank-building.png", width=64)
-    st.markdown("### 🏦 **Filter Controls**")
+    st.markdown("### **Filter Controls**")
     st.caption("Refine customer segments across multiple dimensions.")
     
     # Geography
@@ -161,7 +161,7 @@ with st.sidebar:
     selected_prods = st.multiselect("Bank Products Owned", all_prods, default=all_prods)
     
     st.markdown("---")
-    if st.button("🔄 Reset All Filters", use_container_width=True):
+    if st.button("Reset All Filters", use_container_width=True):
         st.rerun()
 
 # Apply Filters
@@ -265,13 +265,13 @@ if filtered_count == 0:
 
 # Navigation Tabs
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-    "📊 Churn Overview",
-    "🌍 Geographic Analysis",
-    "👥 Demographics & Tenure",
-    "💎 High-Value & Products",
-    "🔍 Customer Drill-Down",
-    "📑 Full Research Paper",
-    "🏛️ Supervisory Briefing"
+    "Churn Overview",
+    "Geographic Analysis",
+    "Demographics & Tenure",
+    "High-Value & Products",
+    "Customer Drill-Down",
+    "Full Research Paper",
+    "️ Supervisory Briefing"
 ])
 
 # ================= TAB 1: CHURN OVERVIEW =================
@@ -309,11 +309,11 @@ with tab1:
     with col_b:
         st.markdown("#### Primary Empirical Drivers Identified")
         st.markdown("""
-        - 🇩🇪 **German Jurisdictional Fragility:** Germany generates **32.44%** churn (GRI 1.59), contributing **39.96%** of all churned clients despite representing only 25% of customers.
-        - 🎯 **Pre-Retirement Vulnerability (46–60):** The 46–60 age group registers an unprecedented **51.12%** churn portfolio-wide, and surges to **67.33%** in Germany.
+        - **German Jurisdictional Fragility:** Germany generates **32.44%** churn (GRI 1.59), contributing **39.96%** of all churned clients despite representing only 25% of customers.
+        - **Pre-Retirement Vulnerability (46–60):** The 46–60 age group registers an unprecedented **51.12%** churn portfolio-wide, and surges to **67.33%** in Germany.
         - ⚡ **Digital Dormancy Penalty:** Inactive members exhibit **26.85%** churn versus **14.27%** for active members—a **46.8% reduction in churn** when digital engagement is maintained.
         - ⚠️ **The Multi-Product Paradox:** Holding 2 products provides peak retention (**7.58%** churn), while holding 3 or 4 products triggers catastrophic flight (**82.7%** and **100%** churn respectively).
-        - 💰 **High-Value Capital Drain:** Churned high-balance accounts account for **€110.85M** in departed balances, threatening core deposit stability.
+        - **High-Value Capital Drain:** Churned high-balance accounts account for **€110.85M** in departed balances, threatening core deposit stability.
         """)
 
     st.markdown("---")
@@ -463,7 +463,7 @@ with tab3:
     fig_heat.update_layout(height=360)
     st.plotly_chart(fig_heat, use_container_width=True)
     
-    st.info("💡 **Key Finding:** German customers aged 46–60 exhibit an alarming **67.33% churn rate**, making this sub-segment the single highest churn concentration across all retail banking operations.")
+    st.info("**Key Finding:** German customers aged 46–60 exhibit an alarming **67.33% churn rate**, making this sub-segment the single highest churn concentration across all retail banking operations.")
 
 # ================= TAB 4: HIGH VALUE & PRODUCTS =================
 with tab4:
@@ -533,7 +533,7 @@ with tab5:
     
     triage_col1, triage_col2 = st.columns([1, 2])
     with triage_col1:
-        only_high_risk = st.checkbox("🚩 Show Only Critical Priority Accounts (Germany + Age 46–60 or Balance ≥ €120k Churned)", value=False)
+        only_high_risk = st.checkbox("Show Only Critical Priority Accounts (Germany + Age 46–60 or Balance ≥ €120k Churned)", value=False)
     
     if only_high_risk:
         display_df = df[((df['Geography'] == 'Germany') & (df['AgeGroup'] == '46–60')) | ((df['BalanceSegment'] == 'High Balance (≥€119.8k)') & (df['Exited'] == 1))]
@@ -548,7 +548,7 @@ with tab5:
     # CSV Download
     csv_data = display_df.to_csv(index=False).encode('utf-8')
     st.download_button(
-        label="📥 Download Filtered Customer Dataset (CSV)",
+        label="Download Filtered Customer Dataset (CSV)",
         data=csv_data,
         file_name="european_banking_churn_filtered.csv",
         mime="text/csv",

@@ -16,6 +16,10 @@ Click any link below to open or download the deliverable directly in your browse
   Direct Live Website: https://panchaksharayya12.github.io/Bankchurn/  
   Local Development Server: http://localhost:3000
 
+- **Live Streamlit Analytics Engine (24/7 Cloud Application):**  
+  Direct Live App: https://panchaksharayya12-bankchurn-app-kwieia.streamlit.app/  
+  Local Development Server: http://localhost:8501
+
 - **PowerPoint Presentation (10 Slides):**  
   Direct File Download: https://github.com/panchaksharayya12/Bankchurn/raw/main/Presentation_Customer_Segmentation_and_Churn.pptx  
   View on GitHub: https://github.com/panchaksharayya12/Bankchurn/blob/main/Presentation_Customer_Segmentation_and_Churn.pptx
@@ -44,6 +48,7 @@ Click any link below to open or download the deliverable directly in your browse
 
 - **Streamlit Analytics Engine Python Source Code:**  
   Direct Link: https://github.com/panchaksharayya12/Bankchurn/blob/main/app.py  
+  Live Cloud Application: https://panchaksharayya12-bankchurn-app-kwieia.streamlit.app/  
   Local Streamlit Server: http://localhost:8501
 
 - **PowerPoint Generator Python Script:**  
